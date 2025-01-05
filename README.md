@@ -1,10 +1,5 @@
-# Cockpitdecks Decks
+# Cockpitdecks Extensions
 
-This is the implementation files for
- - Stream Decks
- - Loupedeck
- - Berhinger X-Touch Mini
+Extensions for Cockpitdecks application.
 
- These files are used by the Cockpitdecks application
- to implement phydsical decks connections.
- 
+Representations specific to X-Plane ToLiss airbuses aircrafts.
