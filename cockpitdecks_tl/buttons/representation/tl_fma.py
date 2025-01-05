@@ -120,7 +120,7 @@ FMA_MESSAGES = [
     # "5AP1",  # same, no space
     # "5AP2",
     # "5AP1+2",
-    "5-FD-", # completely off
+    "5-FD-",  # completely off
     "51FD2",
     "51FD",
     "5FD2",
