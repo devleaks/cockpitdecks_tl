@@ -28,6 +28,8 @@ FMA_BOXES = [
     "AirbusFBW/FMAATHRModeBox",
     "AirbusFBW/FMAATHRboxing",
     "AirbusFBW/FMATHRWarning",
+    "AirbusFBW/AutoBrkLo",
+    "AirbusFBW/AutoBrkMed"
 ]
 FMA_OTHER_DATAREFS = [
     "toliss_airbus/init/cruise_alt",
@@ -83,6 +85,8 @@ FMA_MESSAGES = [
     "1LVR MCT",
     "1LVR ASYM",
     "2SRS",  # FMA 2 (VNAV)
+    "2BRK LO",
+    "2BRK MED",
     "2ALT",
     "2ALT*",
     "2ALT CRZ",
@@ -152,7 +156,7 @@ FMA_LABEL_MODE = 3  # 0 (None), 1 (keys), or 2 (values), or 3 alternates
 FMA_COUNT = len(FMA_LABELS.keys())
 FMA_LINES = len(set([c[0] for c in FMA_DATAREFS]))
 # FMA_COLUMNS = [[0, 7], [7, 15], [15, 21], [21, 28], [28, 37]]
-FMA_COLUMNS = [[0, 7], [7, 15], [15, 21], [21, 29], [29, 37]]
+FMA_COLUMNS = [[0, 7], [7, 15], [15, 21], [21, 30], [30, 37]]
 FMA_LINE_LENGTH = FMA_COLUMNS[-1][-1]
 FMA_EMPTY_LINE = " " * FMA_LINE_LENGTH
 COMBINED = "combined"
@@ -180,6 +184,7 @@ class FMAIcon(DrawBase):
         self.text = {k: FMA_EMPTY_LINE for k in FMA_DATAREFS}
         self.previous_text: Dict[str, str] = {}
         self.boxed: Set[str] = []
+        self._auto_brake = "00"
         self._cached = None  # cached icon
 
         # get mandatory index
@@ -197,6 +202,13 @@ class FMAIcon(DrawBase):
             logger.warning(f"button {button.name}: FMA index must be in 1..{FMA_COUNT} range")
             fma = FMA_COUNT
         self.fma_idx = fma - 1
+
+        self.global_substitutes = {
+            "THRIDLE": "THR IDLE",
+            "FNL": "FINAL",
+            "1FD": "1 FD",
+            "FD2": "FD 2"
+        }
 
     @property
     def combined(self) -> bool:
@@ -235,6 +247,11 @@ class FMAIcon(DrawBase):
         self.check_boxed()
         if self.boxed != oldboxed:
             logger.debug(f"boxed changed {self.boxed}/{oldboxed}")
+            return True
+        auto_brake = self.auto_brake()
+        if self._auto_brake != auto_brake:
+            logger.debug(f"auto_brake changed {self._auto_brake}/{auto_brake}")
+            self._auto_brake = auto_brake
             return True
         self.previous_text = self.text
         self.text = {k: self.button.get_simulator_variable_value(v, default=FMA_EMPTY_LINE) for k, v in FMA_DATAREFS.items()}
@@ -306,11 +323,25 @@ class FMAIcon(DrawBase):
                 boxed.append("53")
             if boxcode & 8 == 8:
                 boxed.append(COMBINED)
+            if boxcode & 9 == 9:
+                boxed.append("21")
             # etc.
         self.boxed = set(boxed)
         logger.debug(f"boxed: {boxcode}, {self.boxed}")
 
+    def auto_brake(self):
+        auto_brake = "00"
+        brk_lo = self.button.get_simulator_variable_value("AirbusFBW/AutoBrkLo", default=-1)
+        if brk_lo == 1:
+            auto_brake = "10"
+        else:
+            brk_md = self.button.get_simulator_variable_value("AirbusFBW/AutoBrkMed", default=-1)
+            if brk_md == 1:
+                auto_brake = "01"
+        return auto_brake
+
     def adjust_fma_texts(self):
+        # 1
         init_alt = self.button.get_simulator_variable_value("toliss_airbus/init/cruise_alt", default=-1)
         fcu_alt = self.button.get_simulator_variable_value("toliss_airbus/pfdoutputs/general/ap_altitude_reference", default=-2)
         if init_alt == fcu_alt:
@@ -321,6 +352,13 @@ class FMAIcon(DrawBase):
                     text = text.replace("ALT    ", "ALT CRZ")
                     self.text[line] = text
                     logger.debug(f"fma text modified: {line}: {before} -> {text}")
+        # 2
+        auto_brake = self.auto_brake()
+        if auto_brake == "10":
+            self.text["2b"] = "BRK LO"
+        elif auto_brake == "01":
+            self.text["2b"] = "BRK MED"
+        self.text["2b"] = self.text["2b"] + " " * (FMA_LINE_LENGTH - len(self.text["2b"]))
 
     def get_fma_lines(self, idx: int = -1):
         if not self.is_master_fma():
@@ -574,6 +612,10 @@ class FMAIcon(DrawBase):
                 if i == 1 and self.combined:
                     lat = lat + w
                 self.is_fma_message(text[2:], i + 1)
+
+                for k, v in self.global_substitutes.items():
+                    text = text.replace(k, v)
+
                 draw.text(
                     (lat, h),
                     text=text[2:],
@@ -589,16 +631,28 @@ class FMAIcon(DrawBase):
                         color = "orange"
                     else:
                         color = "white"
-                    draw.rectangle(
-                        (
-                            loffset + 2 * inside,
-                            h - text_size / 2,
-                            loffset + icon_width - 2 * inside,
-                            h + text_size / 2 + 4,
-                        ),
-                        outline=color,
-                        width=3,
-                    )
+                    if ref == "21" and self.combined: # frame around combined text (LAND, FLARE, ROLL OUT...)
+                        draw.rectangle(
+                            (
+                                int(loffset + icon_width / 4 + 2 * inside),
+                                h - text_size / 2,
+                                int(loffset + icon_width + 3 * icon_width / 4 - 2 * inside),
+                                h + text_size / 2 + 4,
+                            ),
+                            outline=color,
+                            width=3,
+                        )
+                    else:
+                        draw.rectangle(
+                            (
+                                loffset + 2 * inside,
+                                h - text_size / 2,
+                                loffset + icon_width - 2 * inside,
+                                h + text_size / 2 + 4,
+                            ),
+                            outline=color,
+                            width=3,
+                        )
             loffset = loffset + icon_width
 
         if not has_line and not self.combined:
