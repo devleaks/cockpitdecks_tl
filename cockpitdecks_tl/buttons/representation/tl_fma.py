@@ -576,10 +576,13 @@ class FMAIcon(DrawBase):
                     if (i == 1 or i == 2) and currline in ["3a", "3w"]:
                         wmsg = self.text[currline][FMA_COLUMNS[1][0] : FMA_COLUMNS[2][1]].strip()
                         if i == 1:
-                            self.is_fma_message(wmsg, 6)
+                            if not self.is_fma_message(wmsg, 6):
+                                logger.warning(f">>{self.text[currline]}")
+
                             logger.debug(f"combined message '{wmsg}'")
                         else:
-                            self.is_fma_message(wmsg, 7)
+                            if not self.is_fma_message(wmsg, 7):
+                                logger.warning(f">>{self.text[currline]}")
                             logger.debug(f"message '{wmsg}'")
                         draw.line(
                             (
@@ -606,7 +609,8 @@ class FMAIcon(DrawBase):
                 lat = loffset + w
                 if i == 1 and self.combined:
                     lat = lat + w
-                self.is_fma_message(text[2:], i + 1)
+                if not self.is_fma_message(text[2:], i + 1):
+                    logger.warning(f">>{text}")
 
                 for k, v in GLOBAL_SUBSTITUTES.items():
                     text = text.replace(k, v)
