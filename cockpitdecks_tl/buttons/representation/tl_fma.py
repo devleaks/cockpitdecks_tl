@@ -29,7 +29,7 @@ FMA_BOXES = [
     "AirbusFBW/FMAATHRboxing",
     "AirbusFBW/FMATHRWarning",
     "AirbusFBW/AutoBrkLo",
-    "AirbusFBW/AutoBrkMed"
+    "AirbusFBW/AutoBrkMed",
 ]
 FMA_OTHER_DATAREFS = [
     "toliss_airbus/init/cruise_alt",
@@ -97,6 +97,7 @@ FMA_MESSAGES = [
     "2OP CLB",
     "2EXP CLB",
     "2EXP DES",
+    "2OP DES",
     "2G/S",
     "2FINAL",
     "2V/S ± ([0-9]+)",
@@ -128,10 +129,10 @@ FMA_MESSAGES = [
     "51FD2",
     "51FD",
     "5FD2",
-    "51FD1",
-    "52FD2",
-    "52FD",
-    "5FD1",
+    # "51FD1",
+    # "52FD2",
+    # "52FD",
+    # "5FD1",
     "5A/THR",
     "CLAND",  # COMBINED MODES
     "CFLARE",
@@ -203,12 +204,7 @@ class FMAIcon(DrawBase):
             fma = FMA_COUNT
         self.fma_idx = fma - 1
 
-        self.global_substitutes = {
-            "THRIDLE": "THR IDLE",
-            "FNL": "FINAL",
-            "1FD": "1 FD",
-            "FD2": "FD 2"
-        }
+        self.global_substitutes = {"THRIDLE": "THR IDLE", "FNL": "FINAL", "1FD": "1 FD", "FD2": "FD 2"}
 
     @property
     def combined(self) -> bool:
@@ -631,7 +627,7 @@ class FMAIcon(DrawBase):
                         color = "orange"
                     else:
                         color = "white"
-                    if ref == "21" and self.combined: # frame around combined text (LAND, FLARE, ROLL OUT...)
+                    if ref == "21" and self.combined:  # frame around combined text (LAND, FLARE, ROLL OUT...)
                         draw.rectangle(
                             (
                                 int(loffset + icon_width / 4 + 2 * inside),
