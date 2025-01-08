@@ -122,17 +122,17 @@ FMA_MESSAGES = [
     "5AP 1",  # FMA 5 (MODE)
     "5AP 2",
     "5AP 1+2",
-    # "5AP1",  # same, no space
-    # "5AP2",
-    # "5AP1+2",
+    "5AP1",  # same, no space
+    "5AP2",
+    "5AP1+2",
     "5-FD-",  # completely off
     "51FD2",
     "51FD",
     "5FD2",
-    # "51FD1",
-    # "52FD2",
-    # "52FD",
-    # "5FD1",
+    "51FD1",
+    "52FD2",
+    "52FD",
+    "5FD1",
     "5A/THR",
     "CLAND",  # COMBINED MODES
     "CFLARE",
