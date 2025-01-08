@@ -163,6 +163,7 @@ FMA_EMPTY_LINE = " " * FMA_LINE_LENGTH
 COMBINED = "combined"
 WARNING = "warn"
 
+GLOBAL_SUBSTITUTES = {"THRIDLE": "THR IDLE", "FNL": "FINAL", "1FD": "1 FD", "FD2": "FD 2"}
 
 logger = logging.getLogger(__file__)
 # logger.setLevel(logging.DEBUG)
@@ -203,8 +204,6 @@ class FMAIcon(DrawBase):
             logger.warning(f"button {button.name}: FMA index must be in 1..{FMA_COUNT} range")
             fma = FMA_COUNT
         self.fma_idx = fma - 1
-
-        self.global_substitutes = {"THRIDLE": "THR IDLE", "FNL": "FINAL", "1FD": "1 FD", "FD2": "FD 2"}
 
     @property
     def combined(self) -> bool:
@@ -609,7 +608,7 @@ class FMAIcon(DrawBase):
                     lat = lat + w
                 self.is_fma_message(text[2:], i + 1)
 
-                for k, v in self.global_substitutes.items():
+                for k, v in GLOBAL_SUBSTITUTES.items():
                     text = text.replace(k, v)
 
                 draw.text(
