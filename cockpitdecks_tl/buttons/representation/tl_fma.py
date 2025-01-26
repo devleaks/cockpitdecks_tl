@@ -206,6 +206,10 @@ class FMAIcon(DrawBase):
         self.fma_idx = fma - 1
 
     @property
+    def aircraft_icao(self):
+        return self.button.cockpit.icao
+
+    @property
     def combined(self) -> bool:
         """FMA vertical and lateral combined into one"""
         return COMBINED in self.boxed
