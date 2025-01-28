@@ -207,7 +207,7 @@ class FMAIcon(DrawBase):
 
     @property
     def aircraft_icao(self):
-        return self.button.cockpit.icao
+        return self.button.cockpit.get_aircraft_icao()
 
     @property
     def combined(self) -> bool:
@@ -330,6 +330,8 @@ class FMAIcon(DrawBase):
 
     def auto_brake(self):
         auto_brake = "00"
+        if self.aircraft_icao != "A339":
+            return auto_brake
         brk_lo = self.button.get_simulator_variable_value("AirbusFBW/AutoBrkLo", default=-1)
         if brk_lo == 1:
             auto_brake = "10"
@@ -340,6 +342,8 @@ class FMAIcon(DrawBase):
         return auto_brake
 
     def adjust_fma_texts(self):
+        if self.aircraft_icao != "A339":
+            return
         # 1
         init_alt = self.button.get_simulator_variable_value("toliss_airbus/init/cruise_alt", default=-1)
         fcu_alt = self.button.get_simulator_variable_value("toliss_airbus/pfdoutputs/general/ap_altitude_reference", default=-2)

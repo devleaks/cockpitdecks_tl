@@ -50,6 +50,10 @@ class FCUBaseIcon(DrawBase):
     def fcu_config(self):
         return self._representation_config
 
+    @property
+    def aircraft_icao(self):
+        return self.button.cockpit.get_aircraft_icao()
+
     def get_simulator_data(self) -> set:
         return set(
             self.mode.get_simulator_data()
