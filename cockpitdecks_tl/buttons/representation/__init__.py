@@ -9,7 +9,7 @@ AIRCRAFTS = {
     "A319": "Airbus A319",
     "A320": "Airbus A320",
     "A32N": "Airbus A320neo",
-    "A321": "Airbus A321",     # Owned
+    "A321": "Airbus A321",  # Owned
     "A21N": "Airbus A321neo",  # Owned
     "A339": "Airbus A330neo",  # Owned
     "A346": "Airbus A340-600",
