@@ -117,7 +117,13 @@ class FCUIcon(DrawBase):
         DrawBase.__init__(self, button=button)
 
         self.mode: str = self.fcuconfig.get("mode", "horizontal")  # type: ignore # horizontal, vertical-left, vertical-right
-        self.icon_color = "#101010"
+        self.icon_color = "#101010" # dask almost black
+        self._datarefs: set | None = None
+        self._icao = ""  # from which aircraft do we have the set?
+
+    @property
+    def aircraft_icao(self):
+        return self.button.cockpit.get_aircraft_icao()
 
     @property
     def fcuconfig(self):
@@ -125,6 +131,53 @@ class FCUIcon(DrawBase):
 
     def describe(self) -> str:
         return "The representation is specific to Toliss Airbus and display the Flight Control Unit (FCU)."
+
+    def get_variables(self) -> set:
+        if self._datarefs is not None:
+            return self._datarefs
+
+        self._datarefs = set()
+        if self.mode == "vertical-left":
+            self._datarefs = {
+                "sim/cockpit2/autopilot/airspeed_dial_kts_mach",
+                "sim/cockpit/autopilot/heading_mag",
+                "sim/cockpit/autopilot/airspeed_is_mach",
+                "AirbusFBW/HDGTRKmode",
+                "AirbusFBW/SPDmanaged",
+                "AirbusFBW/HDGmanaged",
+                "AirbusFBW/SPDdashed",
+                "AirbusFBW/HDGdashed",
+                "AirbusFBW/BaroStdCapt",
+                "AirbusFBW/BaroUnitCapt",
+                "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot"
+            }
+        if self.mode == "vertical-right":
+            self._datarefs = {
+                "sim/cockpit2/autopilot/altitude_dial_ft",
+                "sim/cockpit/autopilot/vertical_velocity",
+                "AirbusFBW/HDGTRKmode",
+                "AirbusFBW/ALTmanaged",
+                "AirbusFBW/VSdashed"
+            }
+        if self.mode == "horizontal":
+            self._datarefs = {
+                "sim/cockpit2/autopilot/airspeed_dial_kts_mach",
+                "sim/cockpit/autopilot/heading_mag",
+                "sim/cockpit/autopilot/airspeed_is_mach",
+                "sim/cockpit2/autopilot/altitude_dial_ft",
+                "sim/cockpit/autopilot/vertical_velocity",
+                "AirbusFBW/HDGTRKmode",
+                "AirbusFBW/SPDmanaged",
+                "AirbusFBW/HDGmanaged",
+                "AirbusFBW/ALTmanaged",
+                "AirbusFBW/SPDdashed",
+                "AirbusFBW/HDGdashed",
+                "AirbusFBW/VSdashed"
+            }
+        if len(self._datarefs) > 1:
+            self._icao = self.aircraft_icao
+        logger.warning(f"invalid mode {self.mode}")
+        return self._datarefs
 
     def get_image_for_icon(self):
         if self.mode == "vertical-left":

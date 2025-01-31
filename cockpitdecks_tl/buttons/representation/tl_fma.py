@@ -31,7 +31,7 @@ FMA_BOXES = [
     "AirbusFBW/AutoBrkLo",
     "AirbusFBW/AutoBrkMed",
 ]
-FMA_OTHER_DATAREFS = [
+FMA_A339_DATAREFS = [
     "toliss_airbus/init/cruise_alt",
     #    "AirbusFBW/AltitudeTargetIsFL",
     "toliss_airbus/pfdoutputs/general/ap_altitude_reference",
@@ -188,6 +188,8 @@ class FMAIcon(DrawBase):
         self.boxed: Set[str] = []
         self._auto_brake = "00"
         self._cached = None  # cached icon
+        self._datarefs: set | None = None
+        self._icao = ""  # from which aircraft do we have the set?
 
         # get mandatory index
         self.all_in_one = False
@@ -216,6 +218,16 @@ class FMAIcon(DrawBase):
 
     def describe(self) -> str:
         return "The representation is specific to Toliss Airbus and display the Flight Mode Annunciators (FMA)."
+
+    def get_variables(self) -> set:
+        if self._datarefs is not None:
+            return self._datarefs
+
+        self._datarefs = set(FMA_DATAREFS.values()) | set(FMA_BOXES)
+        if self.aircraft_icao == "A339":
+            self._datarefs = self._datarefs | set(FMA_A339_DATAREFS)
+        self._icao = self.aircraft_icao
+        return self._datarefs
 
     def is_master_fma(self) -> bool:
         return self.all_in_one or self.fma_idx == 1
