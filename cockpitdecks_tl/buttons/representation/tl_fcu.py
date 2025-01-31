@@ -117,7 +117,7 @@ class FCUIcon(DrawBase):
         DrawBase.__init__(self, button=button)
 
         self.mode: str = self.fcuconfig.get("mode", "horizontal")  # type: ignore # horizontal, vertical-left, vertical-right
-        self.icon_color = "#101010" # dask almost black
+        self.icon_color = "#101010"  # dask almost black
         self._datarefs: set | None = None
         self._icao = ""  # from which aircraft do we have the set?
 
@@ -149,7 +149,7 @@ class FCUIcon(DrawBase):
                 "AirbusFBW/HDGdashed",
                 "AirbusFBW/BaroStdCapt",
                 "AirbusFBW/BaroUnitCapt",
-                "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot"
+                "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot",
             }
         if self.mode == "vertical-right":
             self._datarefs = {
@@ -157,7 +157,7 @@ class FCUIcon(DrawBase):
                 "sim/cockpit/autopilot/vertical_velocity",
                 "AirbusFBW/HDGTRKmode",
                 "AirbusFBW/ALTmanaged",
-                "AirbusFBW/VSdashed"
+                "AirbusFBW/VSdashed",
             }
         if self.mode == "horizontal":
             self._datarefs = {
@@ -172,7 +172,7 @@ class FCUIcon(DrawBase):
                 "AirbusFBW/ALTmanaged",
                 "AirbusFBW/SPDdashed",
                 "AirbusFBW/HDGdashed",
-                "AirbusFBW/VSdashed"
+                "AirbusFBW/VSdashed",
             }
         if len(self._datarefs) > 1:
             self._icao = self.aircraft_icao
