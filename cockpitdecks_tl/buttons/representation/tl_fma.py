@@ -5,6 +5,7 @@ from typing import Dict, Set
 
 from cockpitdecks.buttons.representation.draw import DrawBase
 from cockpitdecks import ICON_SIZE
+from cockpitdecks.strvar import TextWithVariables
 
 # ##############################
 # Toliss Airbus FMA display
@@ -190,6 +191,9 @@ class FMAIcon(DrawBase):
         self._cached = None  # cached icon
         self._datarefs: set | None = None
         self._icao = ""  # from which aircraft do we have the set?
+
+        # style
+        self._text = TextWithVariables(owner=button, config=self.fmaconfig, prefix="text")
 
         # get mandatory index
         self.all_in_one = False
@@ -433,12 +437,10 @@ class FMAIcon(DrawBase):
         inside = round(0.04 * image.width + 0.5)
 
         # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fmaconfig, "text")
-
         lines = self.get_fma_lines()
         logger.debug(f"button {self.button.name}: {lines}")
 
-        font = self.get_font(text_font, text_size)
+        font = self.get_font(self._text.font, self._text.size)
         w = image.width / 2
         p = "m"
         a = "center"
@@ -449,9 +451,9 @@ class FMAIcon(DrawBase):
                 continue
             h = image.height / 2
             if idx == 0:
-                h = inside + text_size
+                h = inside + self._text.size
             elif idx == 2:
-                h = image.height - inside - text_size
+                h = image.height - inside - self._text.size
             # logger.debug(f"position {(w, h)}")
             color = FMA_COLORS[text[1]]
             draw.text((w, h), text=text[2:], font=font, anchor=p + "m", align=a, fill=color)
@@ -460,9 +462,9 @@ class FMAIcon(DrawBase):
                 draw.rectangle(
                     (
                         2 * inside,
-                        h - text_size / 2,
+                        h - self._text.size / 2,
                         ICON_SIZE - 2 * inside,
-                        h + text_size / 2 + 4,
+                        h + self._text.size / 2 + 4,
                     ),
                     outline="white",
                     width=3,
@@ -506,10 +508,10 @@ class FMAIcon(DrawBase):
         inside = round(0.04 * image.height + 0.5)
 
         # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fmaconfig, "text")
         logger.debug(f"button {self.button.name}: is FMA master")
 
         # replaces a few bizarre strings...
+        text = self.fmaconfig.get("text")
         if text is not None:
             text = text.replace("THRIDLE", "THR IDLE")  # ?
             text = text.replace("FNL", "FINAL")  # ?
@@ -525,7 +527,7 @@ class FMAIcon(DrawBase):
             draw.line(((loffset, 0), (loffset, ICON_SIZE)), fill="white", width=lthinkness)
         if self.fma_label_mode > 0:
             ls = 20
-            font = self.get_font(text_font, ls)
+            font = self.get_font(self._text.font, ls)
             offs = icon_width / 2
             h = inside + ls / 2
             lbl = list(FMA_LABELS.keys())
@@ -574,7 +576,7 @@ class FMAIcon(DrawBase):
                 continue
             lines = self.get_fma_lines(idx=i)
             logger.debug(f"button {self.button.name}: FMA {i+1}: {lines}")
-            font = self.get_font(text_font, text_size)
+            font = self.get_font(self._text.font, self._text.size)
             w = int(4 * ICON_SIZE / 5)
             p = "m"
             a = "center"
@@ -585,9 +587,9 @@ class FMAIcon(DrawBase):
                     continue
                 h = image.height / 2
                 if idx == 0:
-                    h = inside + text_size / 2
+                    h = inside + self._text.size / 2
                 elif idx == 2:
-                    h = image.height - inside - text_size / 2
+                    h = image.height - inside - self._text.size / 2
                     #
                     # special treatment of warning amber messages, centered across FMA 2-3, 3rd line, amber
                     # (yes, I know, they blink 5 times then stay fixed. may be one day.)
@@ -654,9 +656,9 @@ class FMAIcon(DrawBase):
                         draw.rectangle(
                             (
                                 int(loffset + icon_width / 4 + 2 * inside),
-                                h - text_size / 2,
+                                h - self._text.size / 2,
                                 int(loffset + icon_width + 3 * icon_width / 4 - 2 * inside),
-                                h + text_size / 2 + 4,
+                                h + self._text.size / 2 + 4,
                             ),
                             outline=color,
                             width=3,
@@ -665,9 +667,9 @@ class FMAIcon(DrawBase):
                         draw.rectangle(
                             (
                                 loffset + 2 * inside,
-                                h - text_size / 2,
+                                h - self._text.size / 2,
                                 loffset + icon_width - 2 * inside,
-                                h + text_size / 2 + 4,
+                                h + self._text.size / 2 + 4,
                             ),
                             outline=color,
                             width=3,
