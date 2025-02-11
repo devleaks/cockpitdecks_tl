@@ -23,6 +23,7 @@
 import logging
 
 from cockpitdecks import ICON_SIZE
+from cockpitdecks.strvar import TextWithVariables
 from cockpitdecks.value import Value
 from cockpitdecks.buttons.representation.draw import DrawBase
 
@@ -42,6 +43,7 @@ class FCUBaseIcon(DrawBase):
 
         self.mode = Value(name="modes", config=self.fcu_config, button=self.button)
         self.main_value = Value(name="main", config=self.fcu_config.get("main"), button=self.button)
+        self.data_value = Value(name="data", config=self.fcu_config.get("main"), button=self.button)
         self.alt_value = Value(name="alt", config=self.fcu_config.get("alt"), button=self.button)
         self.managed_value = Value(name="managed", config=self.fcu_config.get("managed"), button=self.button)
         self.icon_color = self.fcu_config.get("icon-bg-color", "#101010")
@@ -54,12 +56,12 @@ class FCUBaseIcon(DrawBase):
     def aircraft_icao(self):
         return self.button.cockpit.get_aircraft_icao()
 
-    def get_simulator_data(self) -> set:
+    def get_variables(self) -> set:
         return set(
-            self.mode.get_simulator_data()
-            | self.main_value.get_simulator_data()
-            | self.alt_value.get_simulator_data()
-            | self.managed_value.get_simulator_data()
+            self.mode.get_variables()
+            | self.main_value.get_variables()
+            | self.alt_value.get_variables()
+            | self.managed_value.get_variables()
         )
 
     def get_image_for_icon(self):
@@ -67,43 +69,6 @@ class FCUBaseIcon(DrawBase):
 
     def describe(self) -> str:
         return "The representation is specific to Toliss Airbus and display the one element of the FCU: QNH, SPEED, HEADING, ALTITUDE, or VERTICAL SPEED."
-
-    def get_image_for_icon(self):
-        image, draw = self.double_icon()
-        inside = round(0.04 * ICON_SIZE + 0.5)
-        # pylint: disable=W0612
-
-        mode = self.mode.get_value()
-        print("mode", mode)
-
-        main = self.main_value.get_value()
-        print("main", main)
-
-        alt = self.alt_value.get_value()
-        print("alt", alt)
-
-        managed = self.managed_value.get_value()
-        print("managed", managed)
-
-        # This is for the header text
-        text, text_format, text_font, text_color, text_size, text_position = self.main_value.get_text_detail(config=self.main_value._config, which_text="text")
-
-        # This is for the value
-        text, text_format, text_font, text_color, text_size, text_position = self.main_value.get_text_detail(config=self.main_value._config, which_text="data")
-
-        # Paste image on cockpit background and return it.
-        bg = self.button.deck.get_icon_background(
-            name=self.button_name(),
-            width=2 * ICON_SIZE,
-            height=2 * ICON_SIZE,
-            texture_in=None,
-            color_in=self.icon_color,
-            use_texture=False,
-            who="FCU-BASE",
-        )
-        bg.alpha_composite(image)
-        self._cached = bg
-        return self._cached
 
 
 class FCUIcon(DrawBase):
@@ -120,6 +85,9 @@ class FCUIcon(DrawBase):
         self.icon_color = "#101010"  # dask almost black
         self._datarefs: set | None = None
         self._icao = ""  # from which aircraft do we have the set?
+
+        self._display_text = TextWithVariables(owner=button, config=self.fcuconfig, prefix="text")
+        self._display_value = TextWithVariables(owner=button, config=self.fcuconfig, prefix="value")
 
     @property
     def aircraft_icao(self):
@@ -199,8 +167,6 @@ class FCUIcon(DrawBase):
         image, draw = self.double_icon(width=THIS_WIDTH, height=THIS_HEIGHT)
 
         inside = round(0.04 * ICON_SIZE + 0.5)
-        # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fcuconfig, "text")
 
         # demo through default values
         #
@@ -220,8 +186,8 @@ class FCUIcon(DrawBase):
         # )
 
         # static texts
-        font = self.get_font(text_font, text_size)
-        h = text_size + inside
+        font = self.get_font(self._display_text.font, self._display_text.size)
+        h = self._display_text.size + inside
         if mach_mode:
             draw.text(
                 (150, h),
@@ -229,7 +195,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_text.color,
             )
         else:
             draw.text(
@@ -238,10 +204,10 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_text.color,
             )
 
-        draw.text((720, h), text="LAT", font=font, anchor="ls", align="left", fill=text_color)
+        draw.text((720, h), text="LAT", font=font, anchor="ls", align="left", fill=self._display_text.color)
         if heading_mode:
             draw.text(
                 (460, h),
@@ -249,7 +215,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_text.color,
             )
             draw.text(
                 (960, 120),
@@ -257,7 +223,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="rs",
                 align="right",
-                fill=text_color,
+                fill=self._display_text.color,
             )
         else:
             draw.text(
@@ -266,7 +232,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_text.color,
             )
             draw.text(
                 (960, 220),
@@ -274,7 +240,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="rs",
                 align="right",
-                fill=text_color,
+                fill=self._display_text.color,
             )
 
         if heading_mode:
@@ -284,7 +250,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_text.color,
             )
             draw.text(
                 (1880, h),
@@ -292,7 +258,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="rs",
                 align="right",
-                fill=text_color,
+                fill=self._display_text.color,
             )
         else:
             draw.text(
@@ -301,7 +267,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_text.color,
             )
             draw.text(
                 (THIS_WIDTH - inside, h),
@@ -309,32 +275,32 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="rs",
                 align="right",
-                fill=text_color,
+                fill=self._display_text.color,
             )
 
-        draw.text((1320, h), text="ALT", font=font, anchor="ls", align="left", fill=text_color)
+        draw.text((1320, h), text="ALT", font=font, anchor="ls", align="left", fill=self._display_text.color)
         draw.text(
             (1600, h),
             text="LVL/CH",
             font=font,
             anchor="ms",
             align="center",
-            fill=text_color,
+            fill=self._display_text.color,
         )
 
         # line
-        h = inside + text_size / 2 + 4
-        draw.line([(1410, h), (1510, h)], fill=text_color, width=3, joint="curve")
+        h = inside + self._display_text.size / 2 + 4
+        draw.line([(1410, h), (1510, h)], fill=self._display_text.color, width=3, joint="curve")
         draw.line(
-            [(1410, h), (1410, h + text_size / 3)],
-            fill=text_color,
+            [(1410, h), (1410, h + self._display_text.size / 3)],
+            fill=self._display_text.color,
             width=3,
             joint="curve",
         )
-        draw.line([(1700, h), (1800, h)], fill=text_color, width=3, joint="curve")
+        draw.line([(1700, h), (1800, h)], fill=self._display_text.color, width=3, joint="curve")
         draw.line(
-            [(1800, h), (1800, h + text_size / 3)],
-            fill=text_color,
+            [(1800, h), (1800, h + self._display_text.size / 3)],
+            fill=self._display_text.color,
             width=3,
             joint="curve",
         )
@@ -356,9 +322,8 @@ class FCUIcon(DrawBase):
 
         # values
         # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fcuconfig, "value")
-        font = self.get_font(text_font, text_size)
-        one = " 1" if text_font == "Seven Segment" else "1"
+        font = self.get_font(self._display_value.font, self._display_value.size)
+        one = " 1" if self._display_value.font == "Seven Segment" else "1"
         h = 200
         dot_size = 24
         hdot = 160
@@ -375,7 +340,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         else:
             spdft = 0.56 if mach_mode else 249
@@ -393,12 +358,12 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         if speed_managed:
             w = 250
             dot = ((w - dot_size, hdot - dot_size), (w + dot_size, hdot + dot_size))
-            draw.ellipse(dot, fill=text_color)
+            draw.ellipse(dot, fill=self._display_value.color)
         #
         # HEADING
         heading_managed = self.button.get_simulator_variable_value("AirbusFBW/HDGmanaged", default=0) == 1
@@ -411,7 +376,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         else:
             heading_val = self.button.get_simulator_variable_value("sim/cockpit/autopilot/heading_mag", 0)
@@ -423,12 +388,12 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         if heading_managed:
             w = 736
             dot = ((w - dot_size, hdot - dot_size), (w + dot_size, hdot + dot_size))
-            draw.ellipse(dot, fill=text_color)
+            draw.ellipse(dot, fill=self._display_value.color)
         #
         # ALTITUDE (always displayed)
         alt_managed = self.button.get_simulator_variable_value("AirbusFBW/ALTmanaged", default=0) == 1
@@ -442,12 +407,12 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="ls",
             align="left",
-            fill=text_color,
+            fill=self._display_value.color,
         )  # should always be len=5
         if alt_managed:
             w = 1590
             dot = ((w - dot_size, hdot - dot_size), (w + dot_size, hdot + dot_size))
-            draw.ellipse(dot, fill=text_color)
+            draw.ellipse(dot, fill=self._display_value.color)
 
         # Vertical speed/slope is tricky
         vs_val = -1
@@ -459,7 +424,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_value.color,
             )  # should always be len=5 or 6
         else:
             vsdft = -1200 if heading_mode else -2.5
@@ -479,10 +444,10 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="ls",
                 align="left",
-                fill=text_color,
+                fill=self._display_value.color,
             )  # should always be len=5 or 6
         # little + or - in front of vertical speed
-        font = self.get_font("Seven Segment", int(0.7 * text_size))
+        font = self.get_font("Seven Segment", int(0.7 * self._display_value.size))
         vs = "-" if vs_val < 0 else "+"
         draw.text(
             (1650, h - 16),
@@ -490,7 +455,7 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="ls",
             align="left",
-            fill=text_color,
+            fill=self._display_value.color,
         )  # should always be len=5 or 6
 
         # Paste image on cockpit background and return it.
@@ -516,14 +481,11 @@ class FCUIcon(DrawBase):
 
         inside = round(0.04 * ICON_SIZE + 0.5)
 
-        # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fcuconfig, "text")
-
         mach_mode = self.button.get_simulator_variable_value("sim/cockpit/autopilot/airspeed_is_mach", default=0) == 1
         heading_mode = self.button.get_simulator_variable_value("AirbusFBW/HDGTRKmode", default=1) == 0
 
-        font = self.get_font(text_font, text_size)
-        h = inside + text_size
+        font = self.get_font(self._display_text.font, self._display_text.size)
+        h = inside + self._display_text.size
         centerx = image.width / 2
         txt = "MACH" if mach_mode else "SPD"
         draw.text(
@@ -532,7 +494,7 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="ms",
             align="center",
-            fill=text_color,
+            fill=self._display_text.color,
         )
 
         txt = "HDG" if heading_mode else "TRK"
@@ -542,7 +504,7 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="ms",
             align="center",
-            fill=text_color,
+            fill=self._display_text.color,
         )
 
         draw.text(
@@ -551,7 +513,7 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="ms",
             align="center",
-            fill=text_color,
+            fill=self._display_text.color,
         )
 
         if not self.button.sim.connected:
@@ -571,10 +533,8 @@ class FCUIcon(DrawBase):
             return self._cached
 
         # values
-        # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fcuconfig, "value")
-        font = self.get_font(text_font, text_size)
-        one = " 1" if text_font == "Seven Segment" else "1"
+        font = self.get_font(self._display_value.font, self._display_value.size)
+        one = " 1" if self._display_value.font == "Seven Segment" else "1"
         dot_size = 10
         wdot = image.width - inside - dot_size * 2
 
@@ -591,7 +551,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="mm",
                 align="center",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         else:
             spdft = 0.56 if mach_mode else 249
@@ -609,11 +569,11 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="mm",
                 align="center",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         if speed_managed:
             dot = ((wdot - dot_size, h - dot_size), (wdot + dot_size, h + dot_size))
-            draw.ellipse(dot, fill=text_color)
+            draw.ellipse(dot, fill=self._display_value.color)
         #
         # HEADING
         heading_managed = self.button.get_simulator_variable_value("AirbusFBW/HDGmanaged", default=0) == 1
@@ -627,7 +587,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="mm",
                 align="center",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         else:
             heading_val = self.button.get_simulator_variable_value("sim/cockpit/autopilot/heading_mag", 0)
@@ -639,11 +599,11 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="mm",
                 align="center",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         if heading_managed:
             dot = ((wdot - dot_size, h - dot_size), (wdot + dot_size, h + dot_size))
-            draw.ellipse(dot, fill=text_color)
+            draw.ellipse(dot, fill=self._display_value.color)
         #
         # QNH
         qnh_std = self.button.get_simulator_variable_value("AirbusFBW/BaroStdCapt", 0) == 1
@@ -656,7 +616,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="mm",
                 align="center",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         else:
             qnh_val = self.button.get_simulator_variable_value("sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot", 0)
@@ -673,7 +633,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="mm",
                 align="center",
-                fill=text_color,
+                fill=self._display_value.color,
             )
 
         # Paste image on cockpit background and return it.
@@ -700,13 +660,10 @@ class FCUIcon(DrawBase):
 
         inside = round(0.04 * ICON_SIZE + 0.5)
 
-        # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fcuconfig, "text")
-
         heading_mode = self.button.get_simulator_variable_value("AirbusFBW/HDGTRKmode", default=1) == 0
 
-        font = self.get_font(text_font, text_size)
-        h = inside + text_size
+        font = self.get_font(self._display_text.font, self._display_text.size)
+        h = inside + self._display_text.size
         centerx = int(image.width / 2)
         draw.text(
             (centerx, h),
@@ -714,7 +671,7 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="ms",
             align="center",
-            fill=text_color,
+            fill=self._display_text.color,
         )
 
         txt = "V/S" if heading_mode else "FPA"
@@ -724,7 +681,7 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="ms",
             align="center",
-            fill=text_color,
+            fill=self._display_text.color,
         )
 
         # Nothing in lower third
@@ -746,11 +703,9 @@ class FCUIcon(DrawBase):
             return self._cached
 
         # values
-        # pylint: disable=W0612
-        text, text_format, text_font, text_color, text_size, text_position = self.get_text_detail(self.fcuconfig, "value")
-        text_size = int(2 * text_size / 3)
-        font = self.get_font(text_font, text_size)
-        one = " 1" if text_font == "Seven Segment" else "1"
+        text_size = int(2 * self._display_value.size / 3)
+        font = self.get_font(self._display_value.font, text_size)
+        one = " 1" if self._display_value.font == "Seven Segment" else "1"
         dot_size = 10
         wdot = image.width - inside - dot_size * 2
 
@@ -765,13 +720,13 @@ class FCUIcon(DrawBase):
             font=font,
             anchor="rm",
             align="right",
-            fill=text_color,
+            fill=self._display_value.color,
         )
 
         alt_managed = self.button.get_simulator_variable_value("AirbusFBW/ALTmanaged", default=0) == 1
         if alt_managed:
             dot = ((wdot - dot_size, h - dot_size), (wdot + dot_size, h + dot_size))
-            draw.ellipse(dot, fill=text_color)
+            draw.ellipse(dot, fill=self._display_value.color)
 
         # Vertical speed/slope is tricky
         vs_dashed = self.button.get_simulator_variable_value("AirbusFBW/VSdashed", False)
@@ -785,7 +740,7 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="rm",
                 align="right",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         else:
             vsdft = -1200 if heading_mode else -2.5
@@ -805,12 +760,12 @@ class FCUIcon(DrawBase):
                 font=font,
                 anchor="rm",
                 align="right",
-                fill=text_color,
+                fill=self._display_value.color,
             )
         # little + or - in front of vertical speed
-        font = self.get_font("Seven Segment", int(text_size))
+        font = self.get_font("Seven Segment", int(self._display_value.size))
         vs = "-" if vs_val < 0 else "+"
-        draw.text((inside, h), text=vs, font=font, anchor="lm", align="left", fill=text_color)  # should always be len=5 or 6
+        draw.text((inside, h), text=vs, font=font, anchor="lm", align="left", fill=self._display_value.color)  # should always be len=5 or 6
 
         # Paste image on cockpit background and return it.
         bg = self.button.deck.get_icon_background(
