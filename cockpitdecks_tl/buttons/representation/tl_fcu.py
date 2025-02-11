@@ -23,52 +23,11 @@
 import logging
 
 from cockpitdecks import ICON_SIZE
-from cockpitdecks.strvar import TextWithVariables
-from cockpitdecks.value import Value
 from cockpitdecks.buttons.representation.draw import DrawBase
+from cockpitdecks.strvar import TextWithVariables
 
 logger = logging.getLogger(__name__)
 # logger.setLevel(logging.DEBUG)
-
-
-class FCUBaseIcon(DrawBase):
-    """Displays Toliss Airbus Flight Mode Annunciators on Streamdeck Plus touchscreen"""
-
-    REPRESENTATION_NAME = "fcu-base"
-
-    PARAMETERS = {}
-
-    def __init__(self, button: "Button"):
-        DrawBase.__init__(self, button=button)
-
-        self.mode = Value(name="modes", config=self.fcu_config, button=self.button)
-        self.main_value = Value(name="main", config=self.fcu_config.get("main"), button=self.button)
-        self.data_value = Value(name="data", config=self.fcu_config.get("main"), button=self.button)
-        self.alt_value = Value(name="alt", config=self.fcu_config.get("alt"), button=self.button)
-        self.managed_value = Value(name="managed", config=self.fcu_config.get("managed"), button=self.button)
-        self.icon_color = self.fcu_config.get("icon-bg-color", "#101010")
-
-    @property
-    def fcu_config(self):
-        return self._representation_config
-
-    @property
-    def aircraft_icao(self):
-        return self.button.cockpit.get_aircraft_icao()
-
-    def get_variables(self) -> set:
-        return set(
-            self.mode.get_variables()
-            | self.main_value.get_variables()
-            | self.alt_value.get_variables()
-            | self.managed_value.get_variables()
-        )
-
-    def get_image_for_icon(self):
-        return None
-
-    def describe(self) -> str:
-        return "The representation is specific to Toliss Airbus and display the one element of the FCU: QNH, SPEED, HEADING, ALTITUDE, or VERTICAL SPEED."
 
 
 class FCUIcon(DrawBase):
@@ -82,7 +41,8 @@ class FCUIcon(DrawBase):
         DrawBase.__init__(self, button=button)
 
         self.mode: str = self.fcuconfig.get("mode", "horizontal")  # type: ignore # horizontal, vertical-left, vertical-right
-        self.icon_color = "#101010"  # dask almost black
+        self.icon_color = self.fcuconfig.get("icon-bg-color", "#101010")
+
         self._datarefs: set | None = None
         self._icao = ""  # from which aircraft do we have the set?
 
