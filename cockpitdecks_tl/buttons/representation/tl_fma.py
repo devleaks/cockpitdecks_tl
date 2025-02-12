@@ -227,11 +227,14 @@ class FMAIcon(DrawBase):
         if self._datarefs is not None:
             return self._datarefs
 
-        self._datarefs = set(FMA_DATAREFS.values()) | set(FMA_BOXES)
+        self._datarefs = set(FMA_BOXES)  # set(FMA_DATAREFS.values()) | set(FMA_BOXES)
         if self.aircraft_icao == "A339":
             self._datarefs = self._datarefs | set(FMA_A339_DATAREFS)
         self._icao = self.aircraft_icao
         return self._datarefs
+
+    def get_string_variables(self) -> set:
+        return set(FMA_DATAREFS.values())
 
     def is_master_fma(self) -> bool:
         return self.all_in_one or self.fma_idx == 1
