@@ -33,8 +33,8 @@ FMA_BOXES = [
     "AirbusFBW/AutoBrkMed",
 ]
 FMA_A339_DATAREFS = [
-    "toliss_airbus/init/cruise_alt",
     #    "AirbusFBW/AltitudeTargetIsFL",
+    "toliss_airbus/init/cruise_alt",
     "toliss_airbus/pfdoutputs/general/ap_altitude_reference",
 ]
 # Reproduction on Streamdeck touchscreen colors is difficult.
