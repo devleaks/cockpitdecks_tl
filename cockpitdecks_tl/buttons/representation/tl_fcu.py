@@ -268,7 +268,7 @@ class FCUIcon(DrawBase):
         if not self.button.sim.connected:
             logger.debug("not connected")
             bg = self.button.deck.get_icon_background(
-                name=self.button_name(),
+                name=self.button_name,
                 width=THIS_WIDTH,
                 height=THIS_HEIGHT,
                 texture_in=None,
@@ -420,7 +420,7 @@ class FCUIcon(DrawBase):
 
         # Paste image on cockpit background and return it.
         bg = self.button.deck.get_icon_background(
-            name=self.button_name(),
+            name=self.button_name,
             width=THIS_WIDTH,
             height=THIS_HEIGHT,
             texture_in=None,
@@ -479,7 +479,7 @@ class FCUIcon(DrawBase):
         if not self.button.sim.connected:
             logger.debug("not connected")
             bg = self.button.deck.get_icon_background(
-                name=self.button_name(),
+                name=self.button_name,
                 width=THIS_WIDTH,
                 height=THIS_HEIGHT,
                 texture_in=None,
@@ -598,7 +598,7 @@ class FCUIcon(DrawBase):
 
         # Paste image on cockpit background and return it.
         bg = self.button.deck.get_icon_background(
-            name=self.button_name(),
+            name=self.button_name,
             width=THIS_WIDTH,
             height=THIS_HEIGHT,
             texture_in=None,
@@ -649,7 +649,7 @@ class FCUIcon(DrawBase):
         if not self.button.sim.connected:
             logger.debug("not connected")
             bg = self.button.deck.get_icon_background(
-                name=self.button_name(),
+                name=self.button_name,
                 width=THIS_WIDTH,
                 height=THIS_HEIGHT,
                 texture_in=None,
@@ -729,7 +729,7 @@ class FCUIcon(DrawBase):
 
         # Paste image on cockpit background and return it.
         bg = self.button.deck.get_icon_background(
-            name=self.button_name(),
+            name=self.button_name,
             width=THIS_WIDTH,
             height=THIS_HEIGHT,
             texture_in=None,

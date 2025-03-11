@@ -472,7 +472,7 @@ class FMAIcon(DrawBase):
 
         # Paste image on cockpit background and return it.
         bg = self.button.deck.get_icon_background(
-            name=self.button_name(),
+            name=self.button_name,
             width=ICON_SIZE,
             height=ICON_SIZE,
             texture_in=None,
@@ -555,7 +555,7 @@ class FMAIcon(DrawBase):
                     width=lthinkness,
                 )
             bg = self.button.deck.get_icon_background(
-                name=self.button_name(),
+                name=self.button_name,
                 width=8 * ICON_SIZE,
                 height=ICON_SIZE,
                 texture_in=None,
@@ -685,7 +685,7 @@ class FMAIcon(DrawBase):
 
         # Paste image on cockpit background and return it.
         bg = self.button.deck.get_icon_background(
-            name=self.button_name(),
+            name=self.button_name,
             width=8 * ICON_SIZE,
             height=ICON_SIZE,
             texture_in=None,
