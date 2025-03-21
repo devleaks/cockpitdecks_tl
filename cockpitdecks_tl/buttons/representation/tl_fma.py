@@ -3,8 +3,7 @@ import re
 
 from typing import Dict, Set
 
-from cockpitdecks.buttons.representation.draw import DrawBase
-from cockpitdecks import ICON_SIZE
+from cockpitdecks.buttons.representation.draw import DrawBase, ICON_SIZE
 from cockpitdecks.strvar import TextWithVariables
 
 # ##############################
