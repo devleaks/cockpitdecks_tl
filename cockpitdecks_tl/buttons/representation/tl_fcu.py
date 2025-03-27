@@ -78,7 +78,7 @@ class FCUIcon(DrawBase):
                 "AirbusFBW/BaroUnitCapt",
                 "sim/cockpit2/gauges/actuators/barometer_setting_in_hg_pilot",
             }
-        if self.mode == "vertical-right":
+        elif self.mode == "vertical-right":
             self._datarefs = {
                 "sim/cockpit2/autopilot/altitude_dial_ft",
                 "sim/cockpit/autopilot/vertical_velocity",
@@ -86,7 +86,7 @@ class FCUIcon(DrawBase):
                 "AirbusFBW/ALTmanaged",
                 "AirbusFBW/VSdashed",
             }
-        if self.mode == "horizontal":
+        elif self.mode == "horizontal":
             self._datarefs = {
                 "sim/cockpit2/autopilot/airspeed_dial_kts_mach",
                 "sim/cockpit/autopilot/heading_mag",
@@ -101,9 +101,10 @@ class FCUIcon(DrawBase):
                 "AirbusFBW/HDGdashed",
                 "AirbusFBW/VSdashed",
             }
+        else:
+            logger.warning(f"invalid mode {self.mode}")
         if len(self._datarefs) > 1:
             self._icao = self.aircraft_icao
-        logger.warning(f"invalid mode {self.mode}")
         return self._datarefs
 
     def get_image_for_icon(self):
