@@ -5,7 +5,7 @@ from cockpitdecks.buttons.representation.hardware import HardwareRepresentation
 from .mcdu import MCDU
 
 logger = logging.getLogger(__file__)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 # logger.setLevel(15)
 
 
@@ -66,9 +66,9 @@ class MCDUScreen(HardwareRepresentation):
         )
         bg.alpha_composite(image)
 
-        with open("mcdu_lines.png", "wb") as im:
-            bg.save(im, format="PNG")
-            # logger.debug(f"button {self.button.name}: saved")
+        # with open("mcdu_lines.png", "wb") as im:
+        #     bg.save(im, format="PNG")
+        #     logger.debug(f"button {self.button.name}: saved")
 
         # self._cached = bg
         # logger.warning(f"button {self.button.name}: image not cached for debug ({bg})")
