@@ -36,22 +36,17 @@ class MCDUScreen(HardwareRepresentation):
 
     def get_image_for_icon(self):
         """ """
-        if not self.is_updated() and self._cached is not None:
-            logger.debug(f"button {self.button.name}: returning cached")
-            return self._cached
-        # logger.debug(f"button {self.button.name}: creating image")
-
         image, draw = self.double_icon(width=520, height=400)
 
         inside = round(0.04 * image.height + 0.5)
 
-        font = self.get_font("HoneywellMCDU.ttf", 26)
-        fontsm = self.get_font("HoneywellMCDUSmall.ttf", 22)
+        font = self.get_font("HoneywellMCDU.ttf", 25)
+        fontsm = self.get_font("HoneywellMCDUSmall.ttf", 21)
+        # alternate font for special character, not present in above (arrows, brackets, etc.)
+        altfont = self.get_font("D-DIN.otf", 25)
+        altfontsm = self.get_font("D-DIN.otf", 21)
 
-        dinfont = self.get_font("DIN.ttf", 26)
-        dinfontsm = self.get_font("DIN.ttf", 22)
-
-        if not self.mcdu.draw_text(mcdu_unit=self.mcdu_unit, draw=draw, fonts=[fontsm, font, dinfontsm, dinfont]):
+        if not self.mcdu.draw_text(mcdu_unit=self.mcdu_unit, draw=draw, fonts=[fontsm, font, altfontsm, altfont]):
             draw.text((int(image.width / 2), inside + 30), text="MCDU WAITING FOR DATA", font=fontsm, anchor="mb", align="center", fill="#FD8008")
 
         # Paste image on cockpit background and return it.

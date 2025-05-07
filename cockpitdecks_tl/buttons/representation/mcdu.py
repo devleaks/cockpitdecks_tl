@@ -20,6 +20,9 @@ MCDU_COLORS = {
 }
 SLEW_KEYS = "VertSlewKeys"
 
+MCDU_UNIT = "mucdu-unit"
+
+
 class MCDU(VariableListener):
 
     def __init__(self) -> None:
@@ -35,7 +38,7 @@ class MCDU(VariableListener):
         for varname in self.get_variables():
             var = simulator.get_variable(name=varname)
             var.add_listener(self)
-            self.datarefs[varname] = var
+            # self.datarefs[varname] = var
         logger.info(f"MCDU requests {len(self.variables)} variables")
 
     def get_variables(self) -> set:
@@ -94,6 +97,7 @@ class MCDU(VariableListener):
             self.build_screen()
         else:  # update changed data
             if SLEW_KEYS in variable.name:
+                self.update_sp(mcdu_unit=mcdu_unit)
                 return
             if "title" in variable.name:
                 self.update_title(mcdu_unit=mcdu_unit)
@@ -160,6 +164,13 @@ class MCDU(VariableListener):
                     if len(has_char) > 1:
                         logger.debug(f"mutiple char {code}, {c}: {has_char}")
                     this_line.append((" ", "w"))
+            # Not fully correct...
+            if code == "sp":
+                sk = self.datarefs.get(f"{MCDU_ROOT}{mcdu_unit}{SLEW_KEYS}")
+                if sk is not None and sk.value == 1:
+                    this_line = this_line[:-2]
+                    this_line.append(("1", "s"))
+                    this_line.append(("4", "s"))
             lines.append(this_line)
         return lines
 
@@ -204,46 +215,53 @@ class MCDU(VariableListener):
 
     def draw_text(self, mcdu_unit: int, draw, fonts) -> bool:
         """Returns success"""
+        xd = int(500 / 24)
 
         def show_line(src, size, y) -> bool:
             line = self.lines.get(src)
             if line is None:
                 logger.debug(f"no line {src}")
                 return False
-            x = 10
-            xd = int(520 / 24)
-
+            x = 30
             font = fonts[1] if size > 0 else fonts[0]
             for c in line:
+                c = (c[0], c[1], font)
                 if c[1] == "s":  # "special" characters (rev. eng.)
+                    font_alt = fonts[3] if size > 0 else fonts[2]  # special font too...
                     if c[0] == "E":
-                        c = ("☐", "a")
+                        c = ("☐", "a", font_alt)  # in searh of larger rectangular box...
+                        color = MCDU_COLORS.get(c[1], "white")  # if color is wrong, default to white
+                        draw.rectangle(((x - 12, y - 22), (x + 4, y + 1)), outline=color, width=1)
                     elif c[0] == "0":
-                        c = ("←", "b")
+                        c = ("←", "b", font)
+                    elif c[0] == "1":
+                        c = ("↑", "w", font)
                     elif c[0] == "2":
-                        c = ("←", "w")
+                        c = ("←", "w", font)
                     elif c[0] == "3":
-                        c = ("→", "w")
+                        c = ("→", "w", font)
+                    elif c[0] == "4":
+                        c = ("↓", "w", font)
                     elif c[0] == "A":
-                        c = ("[", "b")
+                        c = ("[", "b", font_alt)
                     elif c[0] == "B":
-                        c = ("]", "b")
-                    elif c[0] == "`":  # does not print on terminal
-                        c = ("°", c[1])
-                    font = fonts[3] if size > 0 else fonts[2]  # special font too...
-                color = MCDU_COLORS.get(c[1], "white")  # if color is wrong, default to white
-                draw.text((x, y), text=c[0], font=font, anchor="mb", fill=color)
+                        c = ("]", "b", font_alt)
+                if c[0] == "`":  # does not print on terminal
+                    c = ("°", c[1], font)
+                if c[0] != "☐":
+                    color = MCDU_COLORS.get(c[1], "white")  # if color is wrong, default to white
+                    draw.text((x, y), text=c[0], font=c[2], anchor="mb", fill=color)
                 x = x + xd
             return True
 
         if not self.completed():  # if got all data
-            logger.warning("MCDU waiting for data")
+            # logger.debug("MCDU waiting for data")
             return False
 
-        ret = show_line(f"{MCDU_ROOT}{mcdu_unit}title", size=2, y=20)
+        ret = show_line(f"{MCDU_ROOT}{mcdu_unit}title", size=2, y=28)
         for l in range(1, 7):
-            ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}label{l}", size=0, y=-6 + l * 59)
-            ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}cont{l}", size=1, y=18 + l * 59)
+            ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}label{l}", size=0, y=-7 + l * 59)
+            ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}cont{l}", size=1, y=17 + l * 59)
         ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}sp", size=1, y=398)
 
         return ret
