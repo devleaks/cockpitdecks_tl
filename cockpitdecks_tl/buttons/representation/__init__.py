@@ -1,6 +1,7 @@
 # Toliss Airbus specific
 from .tl_fma import FMAIcon
 from .tl_fcu import FCUIcon
+from .tl_mcdu import MCDUScreen
 
 #
 # ToLiss Aircraft Fleet
