@@ -48,7 +48,12 @@ class MCDUScreen(HardwareRepresentation):
 
         # 520x400: [28, -7, 17, 398]
         #
-        self.line_offsets = [self.font_lg + 2, -int(self.font_sm/3),self.font_lg-int(self.font_sm/3), self.sizes[1] - 2]  # baseline for title, 6 x (small, large), scratchpad
+        self.line_offsets = [
+            self.font_lg + 2,
+            -int(self.font_sm / 3),
+            self.font_lg - int(self.font_sm / 3),
+            self.sizes[1] - 2,
+        ]  # baseline for title, 6 x (small, large), scratchpad
 
         self.side_margin = int(self.sizes[0] * 0.02)
         self.xd = int((self.sizes[0] - (2 * self.side_margin)) / 24)  # 24 chars per line
@@ -63,7 +68,6 @@ class MCDUScreen(HardwareRepresentation):
         self._inited = True
 
         # print(">>>", self.sizes, self.inside, self.side_margin, self.xd, self.font_lg, self.font_sm, self.interline, self.line_offsets)
-
 
     def describe(self) -> str:
         return "The representation is specific to Toliss Airbus and display the MCDU screen."
@@ -82,14 +86,19 @@ class MCDUScreen(HardwareRepresentation):
             mcdu_unit=self.mcdu_unit,
             draw=draw,
             fonts=[self.fontsm, self.font, self.altfontsm, self.altfont],
-            left_offset=self.side_margin + self.xd, # int(self.xd / 2),
+            left_offset=self.side_margin + self.xd,  # int(self.xd / 2),
             char_delta=self.xd,
             interline=self.interline,
             line_offsets=self.line_offsets,
-            font_sizes=[self.font_lg, self.font_sm]
+            font_sizes=[self.font_lg, self.font_sm],
         ):
             draw.text(
-                (int(image.width / 2), self.inside + int(image.height / 4)), text="WAITING FOR DATA", font=self.fontsm, anchor="ms", align="center", fill="#FD8008"
+                (int(image.width / 2), self.inside + int(image.height / 4)),
+                text="WAITING FOR DATA",
+                font=self.fontsm,
+                anchor="ms",
+                align="center",
+                fill="#FD8008",
             )
 
         # Paste image on cockpit background and return it.

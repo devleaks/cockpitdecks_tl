@@ -246,7 +246,7 @@ class MCDU(VariableListener):
                         bbox = draw.textbbox((x, y), text="I", font=font, anchor="ms")
                         # (left, top, right, bottom), taller, narrower
                         sd = 2
-                        bbox = ((bbox[0]+sd,bbox[1]+sd),(bbox[2]-sd,bbox[3]+sd))
+                        bbox = ((bbox[0] + sd, bbox[1] + sd), (bbox[2] - sd, bbox[3] + sd))
                         draw.rectangle(bbox, outline=color, width=1)
                         # print((bbox[2] - bbox[0], bbox[3]-bbox[1]), ( int(font_sizes[1]/2) + int(font_sizes[1]/6), font_sizes[1] + 2 + 1) )
                 if c[0] == "`":  # does not print on terminal
