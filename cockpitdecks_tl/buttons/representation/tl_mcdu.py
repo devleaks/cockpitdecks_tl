@@ -51,7 +51,7 @@ class MCDUScreen(HardwareRepresentation):
         self.line_offsets = [self.font_lg + 2, -int(self.font_sm/3),self.font_lg-int(self.font_sm/3), self.sizes[1] - 2]  # baseline for title, 6 x (small, large), scratchpad
 
         self.side_margin = int(self.sizes[0] * 0.02)
-        self.xd = int((self.sizes[0] - (2 * self.side_margin)) / 24)
+        self.xd = int((self.sizes[0] - (2 * self.side_margin)) / 24)  # 24 chars per line
 
         # Draw
         self.font = self.get_font("HoneywellMCDU.ttf", self.font_lg)
@@ -62,7 +62,7 @@ class MCDUScreen(HardwareRepresentation):
 
         self._inited = True
 
-        print(">>>", self.sizes, self.inside, self.side_margin, self.xd, self.font_lg, self.font_sm, self.interline, self.line_offsets)
+        # print(">>>", self.sizes, self.inside, self.side_margin, self.xd, self.font_lg, self.font_sm, self.interline, self.line_offsets)
 
 
     def describe(self) -> str:
@@ -76,16 +76,13 @@ class MCDUScreen(HardwareRepresentation):
 
     def get_image_for_icon(self):
         """ """
-        if not self._inited:
-            self.init()
-
         image, draw = self.double_icon(width=self.sizes[0], height=self.sizes[1])
 
         if not self.mcdu.draw_text(
             mcdu_unit=self.mcdu_unit,
             draw=draw,
             fonts=[self.fontsm, self.font, self.altfontsm, self.altfont],
-            top_offset=30,
+            left_offset=self.side_margin + self.xd, # int(self.xd / 2),
             char_delta=self.xd,
             interline=self.interline,
             line_offsets=self.line_offsets,

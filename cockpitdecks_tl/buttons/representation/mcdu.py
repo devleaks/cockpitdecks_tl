@@ -211,7 +211,7 @@ class MCDU(VariableListener):
             self.update_label(mcdu_unit, line)
             self.update_line(mcdu_unit, line)
 
-    def draw_text(self, mcdu_unit: int, draw, fonts, top_offset: int, char_delta: int, interline: int, line_offsets: list, font_sizes: list) -> bool:
+    def draw_text(self, mcdu_unit: int, draw, fonts, left_offset: int, char_delta: int, interline: int, line_offsets: list, font_sizes: list) -> bool:
         """Returns success"""
 
         def show_line(src, size, y) -> bool:
@@ -219,7 +219,7 @@ class MCDU(VariableListener):
             if line is None:
                 logger.debug(f"no line {src}")
                 return False
-            x = top_offset
+            x = left_offset
             font = fonts[1] if size > 0 else fonts[0]
             for c in line:
                 c = (c[0], c[1], font)
@@ -244,6 +244,9 @@ class MCDU(VariableListener):
                         color = MCDU_COLORS.get(c[1], "white")  # if color is wrong, default to white
                         # draw.rectangle(((x - int(font_sizes[1]/2), y - font_sizes[1] + 2), (x + int(font_sizes[1]/6), y + 1)), outline=color, width=1)
                         bbox = draw.textbbox((x, y), text="I", font=font, anchor="ms")
+                        # (left, top, right, bottom), taller, narrower
+                        sd = 2
+                        bbox = ((bbox[0]+sd,bbox[1]+sd),(bbox[2]-sd,bbox[3]+sd))
                         draw.rectangle(bbox, outline=color, width=1)
                         # print((bbox[2] - bbox[0], bbox[3]-bbox[1]), ( int(font_sizes[1]/2) + int(font_sizes[1]/6), font_sizes[1] + 2 + 1) )
                 if c[0] == "`":  # does not print on terminal
