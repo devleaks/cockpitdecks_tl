@@ -116,8 +116,8 @@ class MCDU(VariableListener):
             if l1[i][0] == " ":
                 line.append(l2[i])
                 continue
-            if l2[i][0] != " ":
-                logger.debug(f"2 chars {l1[i]} / {l2[i]}")
+            if l2[i][0] != " " and l1[i][0] != l2[i][0]:
+                logger.debug(f"2 chars {l1[i]} / {l2[i]} ({l1}, {l2})")
             line.append(l1[i])
         return line
 
