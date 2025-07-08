@@ -300,7 +300,7 @@ class FMAIcon(DrawBase):
             if pattern.match(message):
                 logger.debug(f"{message} matches {test}")
                 return True
-        logger.warning(f"{message} ({column}) not in FMA message list")
+        logger.debug(f"{message} ({column}) not in FMA message list")
         return False
 
     def check_boxed(self):
