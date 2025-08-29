@@ -12,9 +12,9 @@ MCDU_COLORS = {
     "b": "#2FAFDB",
     "g": "#63E224",
     "m": "#DE50DC",
+    "s": "#FFFFFF",  # special characters, not a color
     "w": "#DDDDDD",
     "y": "#EEEE00",
-    "s": "#FFFFFF",  # special characters, not a color
     "Lw": "#FFFFFF",  # bold white, bright white
     "Lg": "#00FF00",  # bold white, bright green
 }
@@ -56,7 +56,7 @@ class MCDU(VariableListener):
         variables = set()
         # label
         for code in ["title", "stitle"]:
-            for color in "bgwys":
+            for color in MCDU_COLORS:  # before: "bgwys":
                 if code == "stitle" and color == "s":
                     continue  # skip
                 variables.add(f"{MCDU_ROOT}{mcdu_unit}{code}{color}")
