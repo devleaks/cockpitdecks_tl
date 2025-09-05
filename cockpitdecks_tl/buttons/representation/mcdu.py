@@ -1,4 +1,9 @@
+"""MCDU
+
+"""
+
 import logging
+import re
 
 from cockpitdecks.variable import VariableListener
 
@@ -22,6 +27,7 @@ SLEW_KEYS = "VertSlewKeys"
 
 MCDU_UNIT = "mucdu-unit"
 
+MCDU_DISPLAY_DATA = r"AirbusFBW/MCDU(?P<unit>[1-3])(?P<name>(title|stitle|sp|label|cont|scont))(?P<line>[1-6]?)(?P<color>(Lw|Lg|[abgmswy]))"
 
 class MCDU(VariableListener):
 
@@ -31,6 +37,7 @@ class MCDU(VariableListener):
         self.datarefs = {}
         self.lines = {}
         self._first = True
+        self.mcdu_units = [1, 2]
 
     def init(self, simulator):
         for varname in self.get_variables():
@@ -50,21 +57,24 @@ class MCDU(VariableListener):
         return variables
 
     def completed(self) -> bool:
+        # if len(self.datarefs) > (len(self.variables) - 10):
+        #     logger.debug("MCDU waiting for data")
+        #     print([d for d in self.variables if d not in self.datarefs])
         return len(self.variables) == len(self.datarefs)
 
     def get_variables1unit(self, mcdu_unit: int = 1) -> set:
         variables = set()
-        # label
-        for code in ["title", "stitle"]:
-            for color in MCDU_COLORS:  # before: "bgwys":
-                if code == "stitle" and color == "s":
-                    continue  # skip
-                variables.add(f"{MCDU_ROOT}{mcdu_unit}{code}{color}")
+        # title
+        for color in "bgswy":
+            variables.add(f"{MCDU_ROOT}{mcdu_unit}title{color}")
+
+        for color in "bgwy":
+            variables.add(f"{MCDU_ROOT}{mcdu_unit}stitle{color}")
         # scratchpad
         code = "sp"
         for color in "aw":
             variables.add(f"{MCDU_ROOT}{mcdu_unit}{code}{color}")
-        # lines
+        # label and content
         for line in range(1, 7):
             for code in ["label", "cont", "scont"]:  # cont = content, scont = content with special characters
                 for color in MCDU_COLORS:
@@ -73,158 +83,108 @@ class MCDU(VariableListener):
                     variables.add(f"{MCDU_ROOT}{mcdu_unit}{code}{line}{color}")
         return variables
 
-    def variable_changed(self, variable):
-        if not variable.has_changed():
-            return
-        if not variable.name.startswith(MCDU_ROOT):
-            return
-        self.datarefs[variable.name] = variable
+    def get_mcdu_unit(self, dataref) -> int:
         mcdu_unit = -1
+        if dataref == "AirbusFBW/DUBrightness[6]":  # MCDU screen brightness unit 1
+            return 1
+        elif dataref == "AirbusFBW/DUBrightness[7]":  # MCDU screen brightness unit 2
+            return 2
         try:
-            mcdu_unit = int(variable.name[len(MCDU_ROOT)])
-        except ValueError:
-            logger.warning(f"error for int {variable.name[len(MCDU_ROOT)]}, {variable}")
-            return
-        # logger.debug(f"MCDU: {variable.name}={variable.value}")
-        if not self.completed():  # if got all data
-            return
-        # At least a value for each variable
-        if self._first:
-            self._first = False
-            logger.info("MCDU read all variables")
-            self.build_screen()
-        else:  # update changed data
-            if SLEW_KEYS in variable.name:
-                self.update_sp(mcdu_unit=mcdu_unit)
-                return
-            if "title" in variable.name:
-                self.update_title(mcdu_unit=mcdu_unit)
-            elif "sp" in variable.name:
-                self.update_sp(mcdu_unit=mcdu_unit)
+            m = None
+            if "VertSlewKeys" in dataref:
+                m = re.match("AirbusFBW/MCDU(?P<unit>[1-3])VertSlewKeys", dataref)
             else:
-                line = variable.name[-2]
-                if line == "L":
-                    line = variable.name[-3]
-                if "label" in variable.name:
-                    self.update_label(mcdu_unit=mcdu_unit, line=line)
-                else:
-                    self.update_line(mcdu_unit=mcdu_unit, line=line)
+                m = re.match(MCDU_DISPLAY_DATA, dataref)
+            if m is None:
+                logger.warning(f"not a display dataref {dataref}")
+                return -1
+            mcdu_unit = int(m["unit"])
+        except:
+            logger.warning(f"error invalid MCDU unit for {dataref}")
+            return -1
+        return mcdu_unit
 
-    def combine(self, l1, l2):
-        line = []
-        for i in range(24):
-            if l1[i][0] == " ":
-                line.append(l2[i])
-                continue
-            if l2[i][0] != " " and l1[i][0] != l2[i][0]:
-                logger.debug(f"2 chars {l1[i]} / {l2[i]} ({l1}, {l2})")
-            line.append(l1[i])
-        return line
+    def variable_changed(self, variable):
+        dataref = variable.name
+        value = variable.value
+        self.datarefs[dataref] = value
+        mcdu_unit = self.get_mcdu_unit(dataref)
 
-    def update_title(self, mcdu_unit: int):
-        lines = self.get_line_extra(mcdu_unit=mcdu_unit, what=["title", "stitle"], colors="bgwys")
-        self.lines[f"{MCDU_ROOT}{mcdu_unit}title"] = self.combine(lines[0], lines[1])
+        if mcdu_unit not in self.mcdu_units:
+            logger.warning(f"invalid MCDU unit {mcdu_unit} ({self.mcdu_units})")
+            return
 
-    def update_sp(self, mcdu_unit: int):
-        self.lines[f"{MCDU_ROOT}{mcdu_unit}sp"] = self.get_line_extra(mcdu_unit=mcdu_unit, what=["sp"], colors="aw")[0]
+        if dataref not in self.variables:
+            logger.debug(f"not a display dataref {dataref}")
+            return
 
-    def update_label(self, mcdu_unit: int, line: int):
-        self.lines[f"{MCDU_ROOT}{mcdu_unit}label{line}"] = self.get_line(mcdu_unit=mcdu_unit, line=line, what=["label"], colors=MCDU_COLORS)[0]
+        m = re.match(MCDU_DISPLAY_DATA, dataref)
+        if m is None:
+            return
+        colors = "".join([c for c in MCDU_COLORS.keys() if not c.startswith("L")])
+        line = -1
+        what = m.group("name")
+        if what.endswith("title"): # stitle, title
+            colors = "bgwys"
+        elif what == "sp":
+            colors = "aw"
+        else:  # label, scont, cont
+            line = int(m.group("line"))
+        self.update_line(mcdu_unit=mcdu_unit, line=line, what=what, colors=colors)
 
-    def update_line(self, mcdu_unit: int, line: int):
-        lines = self.get_line(mcdu_unit=mcdu_unit, line=line, what=["cont", "scont"], colors=MCDU_COLORS)
-        self.lines[f"{MCDU_ROOT}{mcdu_unit}cont{line}"] = self.combine(lines[0], lines[1])
+    def update_line(self, mcdu_unit: int, line: int, what: str, colors):
+        """Line is 24 characters, 1 character is (<char>, <color>, <small>).
+        """
+        line_str = "" if line == -1 else str(line)
+        this_line = []
+        for c in range(24):
+            has_char = []
+            size = 1 if what in ["stitle", "scont", "label"] else 0
+            for color in colors:
+                if what.endswith("cont") and color.startswith("L"):
+                    continue
+                if size == 1 and color.startswith("L"):  # small becomes large
+                    size = 0
+                name = f"AirbusFBW/MCDU{mcdu_unit}{what}{line_str}{color}"
+                v = self.datarefs.get(name)
+                if v is None:
+                    # logger.debug(f"no value for dataref {name}")
+                    continue
+                if c < len(v):
+                    if v[c] != " ":
+                        if color.startswith("L") and len(color) == 2:  # maps Lg, Lw to g, w.
+                            color = color[1]  # prevents "invalid color" further on
+                        if color in MCDU_COLORS:
+                            has_char.append((v[c], color, size))
+                        else:
+                            has_char.append((v[c], color, size))
+            if len(has_char) == 1:
+                this_line = this_line + has_char
+            else:
+                # if len(has_char) > 1:
+                #     logger.debug(f"mutiple char {what}, {c}: {has_char}")
+                this_line.append((" ", "w", size))
+        self.lines[f"AirbusFBW/MCDU{mcdu_unit}{what}{line_str}"] = this_line
 
-    def get_line_extra(self, mcdu_unit, what, colors):
-        lines = []
-        for code in what:
-            this_line = []
-            for c in range(24):
-                has_char = []
-                for color in colors:
-                    if code == "stitle" and color == "s":  # if code in ["stitle", "title"] and color == "s":
-                        continue
-                    name = f"{MCDU_ROOT}{mcdu_unit}{code}{color}"
-                    d = self.datarefs.get(name)
-                    if d is None:
-                        logger.debug(f"no dataref {name} (mcdu_unit={mcdu_unit}, what={what}, colors={colors}, code={code}, color={color})")
-                        continue
-                    v = d.value
-                    if v is None:
-                        # logger.debug(f"no value yet for {name}")
-                        continue
-                    if c < len(v):
-                        if v[c] != " ":
-                            has_char.append((v[c], color))
-                if len(has_char) == 1:
-                    this_line = this_line + has_char
-                else:
-                    if len(has_char) > 1:
-                        logger.debug(f"mutiple char {code}, {c}: {has_char}")
-                    this_line.append((" ", "w"))
-            # Not fully correct...
-            if code == "sp":
-                sk = self.datarefs.get(f"{MCDU_ROOT}{mcdu_unit}{SLEW_KEYS}")
-                if sk is not None and sk.value == 1:
-                    this_line = this_line[:-2]
-                    this_line.append(("1", "s"))
-                    this_line.append(("4", "s"))
-            lines.append(this_line)
-        return lines
-
-    def get_line(self, mcdu_unit, line, what, colors):
-        lines = []
-        for code in what:
-            this_line = []
-            for c in range(24):
-                has_char = []
-                for color in colors:
-                    if code.endswith("cont") and color.startswith("L"):
-                        continue
-                    name = f"{MCDU_ROOT}{mcdu_unit}{code}{line}{color}"
-                    d = self.datarefs.get(name)
-                    if d is None:
-                        logger.debug(f"no dataref {name} (mcdu_unit={mcdu_unit}, what={what}, colors={colors}, code={code}, line={line}, color={color})")
-                        continue
-                    v = d.value
-                    if v is None:
-                        # logger.debug(f"no value yet for {name}")
-                        continue
-                    if c < len(v):
-                        if v[c] != " ":
-                            has_char.append((v[c], color))
-                if len(has_char) == 1:
-                    this_line = this_line + has_char
-                else:
-                    if len(has_char) > 1:
-                        logger.debug(f"mutiple char {code}, {c}: {has_char}")
-                    this_line.append((" ", "w"))
-            lines.append(this_line)
-        return lines
-
-    def build_screen(self):
-        variable = list(self.datarefs.values())[0]
-        mcdu_unit = int(variable.name[14])
-        self.update_title(mcdu_unit)
-        self.update_sp(mcdu_unit)
-        for line in range(1, 7):
-            self.update_label(mcdu_unit, line)
-            self.update_line(mcdu_unit, line)
-
-    def draw_text(self, mcdu_unit: int, draw, fonts, left_offset: int, char_delta: int, interline: int, line_offsets: list, font_sizes: list) -> bool:
+    def draw_text(self, mcdu_unit: int, draw, fonts, left_offset: int, char_delta: int, line_bases: list, font_sizes: list) -> bool:
         """Returns success"""
+        def combine(lr, sm):
+            return [sm[i] if lr[i][0] == " " else lr[i] for i in range(24)]
 
-        def show_line(src, size, y) -> bool:
-            line = self.lines.get(src)
+        def show_line(line, y) -> bool:
             if line is None:
                 logger.debug(f"no line {src}")
                 return False
             x = left_offset
-            font = fonts[1] if size > 0 else fonts[0]
             for c in line:
-                c = (c[0], c[1], font)
+                if len(c) != 3:
+                    logger.warning(f"invalid character {c}, replaced by white space")
+                    c = (" ", COLORS.WHITE, 0)
+                size = c[2]  # !!! Until now, c[2] = 0 (Large), 1 (small)
+                font = fonts[0] if size > 0 else fonts[1]
+                c = (c[0], c[1], font)    # !!! From now on, c[2] = LARGE font or small font
                 if c[1] == "s":  # "special" characters (rev. eng.)
-                    font_alt = fonts[3] if size > 0 else fonts[2]  # special font too...
+                    font_alt = fonts[2] if size > 0 else fonts[3]  # special font too...
                     if c[0] == "0":
                         c = ("←", "b", font)
                     elif c[0] == "1":
@@ -243,7 +203,7 @@ class MCDU(VariableListener):
                         c = ("☐", "a", font_alt)  # in searh of larger rectangular box...
                         color = MCDU_COLORS.get(c[1], "white")  # if color is wrong, default to white
                         # draw.rectangle(((x - int(font_sizes[1]/2), y - font_sizes[1] + 2), (x + int(font_sizes[1]/6), y + 1)), outline=color, width=1)
-                        bbox = draw.textbbox((x, y), text="I", font=font, anchor="ms")
+                        bbox = draw.textbbox((x, y), text="I", font=c[2], anchor="ms")
                         # (left, top, right, bottom), taller, narrower
                         sd = 2
                         bbox = ((bbox[0] + sd, bbox[1] + sd), (bbox[2] - sd, bbox[3] + sd))
@@ -261,10 +221,27 @@ class MCDU(VariableListener):
             # logger.debug("MCDU waiting for data")
             return False
 
-        ret = show_line(f"{MCDU_ROOT}{mcdu_unit}title", size=2, y=line_offsets[0])
+        line = combine(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}title"), self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}stitle"))
+        show_line(line, y=line_bases[0])
         for l in range(1, 7):
-            ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}label{l}", size=0, y=line_offsets[1] + l * interline)
-            ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}cont{l}", size=1, y=line_offsets[2] + l * interline)
-        ret = ret and show_line(f"{MCDU_ROOT}{mcdu_unit}sp", size=1, y=line_offsets[3])
+            show_line(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}label{l}"), y=line_bases[2*l-1])
+            line = combine(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}cont{l}"), self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}scont{l}"))
+            show_line(line, y=line_bases[2*l])
+        show_line(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}sp"), y=line_bases[-1])
 
-        return ret
+        # TO DO
+        # # Additional, non printed keys in lower right corner of display
+        # vertslew_dref = self.set_mcdu_unit(str_in="AirbusFBW/MCDU1VertSlewKeys", mcdu_unit=mcdu_unit)
+        # vertslew_key = self.datarefs.get(self.set_mcdu_unit(str_in="AirbusFBW/MCDU1VertSlewKeys", mcdu_unit=mcdu_unit))
+        # if vertslew_key == 1 or vertslew_key == 2:
+        #     c = (PAGE_CHARS_PER_LINE - 2) * PAGE_BYTES_PER_CHAR
+        #     page[PAGE_LINES - 1][c] = COLORS.WHITE
+        #     page[PAGE_LINES - 1][c + 1] = False
+        #     page[PAGE_LINES - 1][c + 2] = chr(SPECIAL_CHARACTERS.ARROW_UP.value)
+        # if vertslew_key == 1 or vertslew_key == 3:
+        #     c = (PAGE_CHARS_PER_LINE - 1) * PAGE_BYTES_PER_CHAR
+        #     page[PAGE_LINES - 1][c] = COLORS.WHITE
+        #     page[PAGE_LINES - 1][c + 1] = False
+        #     page[PAGE_LINES - 1][c + 2] = chr(SPECIAL_CHARACTERS.ARROW_DOWN.value)
+
+        return True

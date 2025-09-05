@@ -24,9 +24,8 @@ class MCDUScreen(HardwareRepresentation):
         self.fontsm = None
         self.altfont = None
         self.altfontsm = None
-        self.interline = None
         self.side_margin = None
-        self.line_offsets = None
+        self.linebases = []
 
         HardwareRepresentation.__init__(self, button=button)
 
@@ -41,19 +40,18 @@ class MCDUScreen(HardwareRepresentation):
 
         self.inside = round(0.04 * self.sizes[1] + 0.5)
 
-        self.font_lg = int(self.sizes[1] / 16)
-        self.font_sm = int(self.sizes[1] / 18)
-
-        self.interline = self.font_lg + self.font_sm + int(self.sizes[1] / 36)
-
-        # 520x400: [28, -7, 17, 398]
-        #
-        self.line_offsets = [
-            self.font_lg + 2,
-            -int(self.font_sm / 3),
-            self.font_lg - int(self.font_sm / 3),
-            self.sizes[1] - 2,
-        ]  # baseline for title, 6 x (small, large), scratchpad
+        # 520x400
+        self.font_lg = 19
+        self.font_sm = 18
+        spc_il = 2  # space between label and content line
+        spc_bl = 3  # space between 2 pairs of (label, content)
+        block = spc_bl + self.font_lg + spc_il + self.font_sm
+        linebases = [self.font_lg]  # title
+        for i in range(6):
+            linebases.append(linebases[0]+spc_bl+self.font_sm+i*block) # label
+            linebases.append(linebases[1]+spc_il+self.font_lg+i*block) # content
+        linebases.append(linebases[-1]+spc_bl+self.font_lg) # scratchpad
+        self.linebases = linebases
 
         self.side_margin = int(self.sizes[0] * 0.02)
         self.xd = int((self.sizes[0] - (2 * self.side_margin)) / 24)  # 24 chars per line
@@ -66,8 +64,6 @@ class MCDUScreen(HardwareRepresentation):
         self.altfontsm = self.get_font("D-DIN.otf", self.font_sm)
 
         self._inited = True
-
-        # print(">>>", self.sizes, self.inside, self.side_margin, self.xd, self.font_lg, self.font_sm, self.interline, self.line_offsets)
 
     def describe(self) -> str:
         return "The representation is specific to Toliss Airbus and display the MCDU screen."
@@ -88,8 +84,7 @@ class MCDUScreen(HardwareRepresentation):
             fonts=[self.fontsm, self.font, self.altfontsm, self.altfont],
             left_offset=self.side_margin + self.xd,  # int(self.xd / 2),
             char_delta=self.xd,
-            interline=self.interline,
-            line_offsets=self.line_offsets,
+            line_bases=self.linebases,
             font_sizes=[self.font_lg, self.font_sm],
         ):
             draw.text(
