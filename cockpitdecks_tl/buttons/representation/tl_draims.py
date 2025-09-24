@@ -44,9 +44,10 @@ class DRAIMSScreen(HardwareRepresentation):
         self.font_nr = int(self.sizes[1] / 12)
         self.font_lg = int(self.sizes[1] / 8)
         self.font_sm = int(self.sizes[1] / 20)
-        self.font = self.get_font("arial.ttf", self.font_nr)
-        self.fontlg = self.get_font("arial.ttf", self.font_lg)
-        self.fontsm = self.get_font("arial.ttf", self.font_sm)
+        fontname = "Roboto-Regular.ttf"
+        self.font = self.get_font(fontname, self.font_nr)
+        self.fontlg = self.get_font(fontname, self.font_lg)
+        self.fontsm = self.get_font(fontname, self.font_sm)
 
         # 450x277: [28, -7, 17, 398]
         #
@@ -78,21 +79,27 @@ class DRAIMSScreen(HardwareRepresentation):
         """ """
         image, draw = self.double_icon(width=self.sizes[0], height=self.sizes[1])
         self.inside = round(0.04 * self.sizes[1] + 0.5)
+        i2 = int(self.inside / 2)
+
+        def draw_lines(add_split: bool):
+            # draw horizontal and vertical spit bars
+            d = int(image.height / 4)
+            for i in range(1, 4):
+                draw.line(((i2, i * d), (image.width - i2, i * d)), fill="white", width=2)
+            d = 3 * d
+            p = [18, 44, 57]
+            for i in range(3):
+                s = int(p[i] * image.width / 80)
+                if i > 0 and add_split:
+                    draw.line(((s, d), (s, self.height - self.inside)), fill="white", width=2)
+
+        page = "vhf"
 
         # draw.rectangle(((0,0), (image.width-1, image.height-1)), outline="cyan", width=1)
-        i2 = int(self.inside / 2)
-        d = int(image.height / 4)
-        for i in range(1, 4):
-            draw.line(((i2, i * d), (image.width - i2, i * d)), fill="white", width=2)
-
-        d = 3 * d
-        p = [18, 44, 57]
-        for i in range(3):
-            s = int(p[i] * image.width / 80)
-            draw.line(((s, d), (s, self.height - self.inside)), fill="white", width=2)
+        if page != "menu":
+            draw_lines(add_split=page != "nav")
 
         # development
-        page = "vhf"
 
         if page == "vhf":
             self.page_vhf(image, draw)
@@ -236,5 +243,23 @@ class DRAIMSScreen(HardwareRepresentation):
             )
             ox = int(60 * image.width / 80)
             oy = image.height - self.inside
-            self.draw_icon(draw, "arrow-up", ox, oy - self.font_lg, self.font_nr)
-            self.draw_icon(draw, "arrow-down", ox, oy, self.font_nr)
+            # "↑↓"
+            # self.draw_icon(draw, "arrow-up", ox, oy - self.font_lg, self.font_nr)
+            arrow_font = self.get_font("B612-Bold.otf", self.font_lg)
+            draw.text(
+                (ox, oy - self.font_lg + int(self.inside / 2)),
+                text="↑",  # self.draims.datarefs.get(f"AirbusFBW/RMP{currbox}StbyFreq")
+                font=arrow_font,
+                anchor="ms",
+                align="center",
+                fill="white",
+            )
+            # self.draw_icon(draw, "arrow-down", ox, oy, self.font_nr)
+            draw.text(
+                (ox, oy),
+                text="↓",  # self.draims.datarefs.get(f"AirbusFBW/RMP{currbox}StbyFreq")
+                font=arrow_font,
+                anchor="ms",
+                align="center",
+                fill="white",
+            )

@@ -48,9 +48,9 @@ class MCDUScreen(HardwareRepresentation):
         block = spc_bl + self.font_lg + spc_il + self.font_sm
         linebases = [self.font_lg]  # title
         for i in range(6):
-            linebases.append(linebases[0]+spc_bl+self.font_sm+i*block) # label
-            linebases.append(linebases[1]+spc_il+self.font_lg+i*block) # content
-        linebases.append(linebases[-1]+spc_bl+self.font_lg) # scratchpad
+            linebases.append(linebases[0] + spc_bl + self.font_sm + i * block)  # label
+            linebases.append(linebases[1] + spc_il + self.font_lg + i * block)  # content
+        linebases.append(linebases[-1] + spc_bl + self.font_lg)  # scratchpad
         self.linebases = linebases
 
         self.side_margin = int(self.sizes[0] * 0.02)

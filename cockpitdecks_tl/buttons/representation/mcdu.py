@@ -29,6 +29,7 @@ MCDU_UNIT = "mucdu-unit"
 
 MCDU_DISPLAY_DATA = r"AirbusFBW/MCDU(?P<unit>[1-3])(?P<name>(title|stitle|sp|label|cont|scont))(?P<line>[1-6]?)(?P<color>(Lw|Lg|[abgmswy]))"
 
+
 class MCDU(VariableListener):
 
     def __init__(self) -> None:
@@ -124,7 +125,7 @@ class MCDU(VariableListener):
         colors = "".join([c for c in MCDU_COLORS.keys() if not c.startswith("L")])
         line = -1
         what = m.group("name")
-        if what.endswith("title"): # stitle, title
+        if what.endswith("title"):  # stitle, title
             colors = "bgwys"
         elif what == "sp":
             colors = "aw"
@@ -133,8 +134,7 @@ class MCDU(VariableListener):
         self.update_line(mcdu_unit=mcdu_unit, line=line, what=what, colors=colors)
 
     def update_line(self, mcdu_unit: int, line: int, what: str, colors):
-        """Line is 24 characters, 1 character is (<char>, <color>, <small>).
-        """
+        """Line is 24 characters, 1 character is (<char>, <color>, <small>)."""
         line_str = "" if line == -1 else str(line)
         this_line = []
         for c in range(24):
@@ -168,6 +168,7 @@ class MCDU(VariableListener):
 
     def draw_text(self, mcdu_unit: int, draw, fonts, left_offset: int, char_delta: int, line_bases: list, font_sizes: list) -> bool:
         """Returns success"""
+
         def combine(lr, sm):
             return [sm[i] if lr[i][0] == " " else lr[i] for i in range(24)]
 
@@ -182,7 +183,7 @@ class MCDU(VariableListener):
                     c = (" ", COLORS.WHITE, 0)
                 size = c[2]  # !!! Until now, c[2] = 0 (Large), 1 (small)
                 font = fonts[0] if size > 0 else fonts[1]
-                c = (c[0], c[1], font)    # !!! From now on, c[2] = LARGE font or small font
+                c = (c[0], c[1], font)  # !!! From now on, c[2] = LARGE font or small font
                 if c[1] == "s":  # "special" characters (rev. eng.)
                     font_alt = fonts[2] if size > 0 else fonts[3]  # special font too...
                     if c[0] == "0":
@@ -224,9 +225,9 @@ class MCDU(VariableListener):
         line = combine(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}title"), self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}stitle"))
         show_line(line, y=line_bases[0])
         for l in range(1, 7):
-            show_line(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}label{l}"), y=line_bases[2*l-1])
+            show_line(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}label{l}"), y=line_bases[2 * l - 1])
             line = combine(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}cont{l}"), self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}scont{l}"))
-            show_line(line, y=line_bases[2*l])
+            show_line(line, y=line_bases[2 * l])
         show_line(self.lines.get(f"AirbusFBW/MCDU{mcdu_unit}sp"), y=line_bases[-1])
 
         # TO DO
