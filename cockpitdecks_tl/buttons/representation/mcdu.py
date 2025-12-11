@@ -1,6 +1,4 @@
-"""MCDU
-
-"""
+"""MCDU"""
 
 import logging
 import re

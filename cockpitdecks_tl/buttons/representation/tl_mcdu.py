@@ -16,6 +16,8 @@ class MCDUScreen(HardwareRepresentation):
 
     PARAMETERS = {}
 
+    SCHEMA = {"unit": {"type": "integer"}}
+
     def __init__(self, button: "Button"):
         self._inited = False
         self.sizes = button._definition.display_size() if button._definition is not None else [500, 400]

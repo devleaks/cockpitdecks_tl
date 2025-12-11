@@ -1,6 +1,4 @@
-"""Digital Radio and Audio Integrating Management System
-
-"""
+"""Digital Radio and Audio Integrating Management System"""
 
 import logging
 

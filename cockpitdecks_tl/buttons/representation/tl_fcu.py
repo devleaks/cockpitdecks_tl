@@ -36,6 +36,15 @@ class FCUIcon(DrawBase):
 
     PARAMETERS = {}
 
+    SCHEMA = {
+        "text-font": {"type": "font", "meta": {"label": "Font"}},
+        "text-size": {"type": "integer", "meta": {"label": "Size"}},
+        "text-color": {"type": "color", "meta": {"label": "Color"}},
+        "value-font": {"type": "font", "meta": {"label": "Font"}},
+        "value-size": {"type": "integer", "meta": {"label": "Size"}},
+        "value-color": {"type": "color", "meta": {"label": "Color"}},
+    }
+
     def __init__(self, button: "Button"):
         DrawBase.__init__(self, button=button)
 
