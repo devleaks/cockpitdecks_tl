@@ -14,8 +14,6 @@ class MCDUScreen(HardwareRepresentation):
 
     REPRESENTATION_NAME = "mcdu"
 
-    PARAMETERS = {}
-
     SCHEMA = {"unit": {"type": "integer"}}
 
     def __init__(self, button: "Button"):

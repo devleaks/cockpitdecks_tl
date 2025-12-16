@@ -175,8 +175,6 @@ class FMAIcon(DrawBase):
 
     REPRESENTATION_NAME = "fma"
 
-    PARAMETERS = {}
-
     SCHEMA = {
         "text-font": {"type": "font", "meta": {"label": "Font"}},
         "text-size": {"type": "integer", "meta": {"label": "Size"}},

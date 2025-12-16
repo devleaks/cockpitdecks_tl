@@ -34,9 +34,8 @@ class FCUIcon(DrawBase):
 
     REPRESENTATION_NAME = "fcu"
 
-    PARAMETERS = {}
-
     SCHEMA = {
+        "mode": {"type": "string", "meta": {"label": "Mode"}, "allowed": ["vertical-left", "vertical-right"]},
         "text-font": {"type": "font", "meta": {"label": "Font"}},
         "text-size": {"type": "integer", "meta": {"label": "Size"}},
         "text-color": {"type": "color", "meta": {"label": "Color"}},
