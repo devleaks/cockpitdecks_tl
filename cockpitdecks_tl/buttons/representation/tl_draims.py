@@ -15,7 +15,7 @@ class DRAIMSScreen(HardwareRepresentation):
 
     REPRESENTATION_NAME = "draims"
 
-    # SCHEMA = {}
+    SCHEMA = HardwareRepresentation.SCHEMA | {"unit": {"type": "integer"}}
 
     def __init__(self, button: "Button"):
         self._inited = False
